@@ -122,4 +122,31 @@ namespace RIO.BCL.Parsing {
 		BMP  = 1 << 3,
 		ALL  = 1 << 4
 	}
+
+	/// <summary>
+	/// Represents an exception that is thrown when an instance of ImageGrabber exists, but no file directory has been provided.
+	/// </summary>
+	public class ImageGrabberNotPrimedException : Exception {
+		/// <summary>
+		/// Gets the error message that describes the exceptional condition.
+		/// </summary>
+		/// <value>
+		/// The error message that explains the reason for the exception.
+		/// </value>
+		public override string Message
+			=> "An instance of ImageGrabber exists, but no file directory has been provided.";
+	}
+
+	/// <summary>
+	/// Represents an exception that is thrown when no image parser has been assigned.
+	/// </summary>
+	public class NoImageParserAssignedException : Exception {
+		/// <summary>
+		/// Gets the message for when no image parser has been assigned.
+		/// </summary>
+		/// <value>
+		/// The message for when no image parser has been assigned.
+		/// </value>
+		public override string Message => "No image parser has been assigned";
+	}
 }
