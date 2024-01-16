@@ -37,7 +37,7 @@ namespace RIO.BCL.Parsing {
 			if (!IsPrimed)
 				throw new ImageGrabberNotPrimedException();
 
-			return ref Parser.GetAllBitmaps();
+			return ref Parser.GetAllBitmapsRef();
 		}
 
 		/// <summary>

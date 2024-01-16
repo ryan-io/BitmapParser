@@ -23,12 +23,7 @@ namespace RIO.BCL.Parsing {
 		/// <summary>
 		/// Returns a reference to the internal array of Bitmap objects.
 		/// </summary>
-		public ref Bitmap[] GetAllBitmaps() => ref _bitmaps;
-
-		/// <summary>
-		/// Returns a read-only reference to the array of the paths to all images.
-		/// </summary>
-		public ref readonly string[] GetAllPaths() => ref _paths;
+		public ref Bitmap[] GetAllBitmapsRef() => ref _bitmaps;
 
 		/// <summary>
 		/// Retrieves a specific Bitmap object from the BitmapParser's array, using a provided index.
@@ -37,7 +32,7 @@ namespace RIO.BCL.Parsing {
 		/// <returns>A reference to the Bitmap object at the specified index.</returns>
 		/// <exception cref="NullReferenceException">Thrown when the internal Bitmap array has not been initialized.</exception>
 		/// <exception cref="IndexOutOfRangeException">Thrown when the provided index is outside the bounds of the Bitmap array.</exception>
-		public ref Bitmap GetBitmap(int bitmapIndex) {
+		public ref Bitmap GetBitmapRef(int bitmapIndex) {
 			if (IsDisposed)
 				throw new BitMapParserDisposedException();
 
@@ -49,6 +44,11 @@ namespace RIO.BCL.Parsing {
 
 			return ref _bitmaps[bitmapIndex];
 		}
+
+		/// <summary>
+		/// Returns a read-only reference to the array of the paths to all images.
+		/// </summary>
+		public ref readonly string[] GetAllPaths() => ref _paths;
 
 		/// <summary>
 		/// Scales the specified bitmap at the given index and replaces it with the new scaled bitmap.
@@ -91,7 +91,7 @@ namespace RIO.BCL.Parsing {
 			if (bitmapIndex < 0)
 				throw new IndexOutOfRangeException(EXCEPTION_INDEX_LESS_THAN_ZERO);
 
-			ref var bmp = ref GetBitmap(bitmapIndex);
+			ref var bmp = ref GetBitmapRef(bitmapIndex);
 
 			return GetNewScaledBitmap(ref bmp, scale, criteria);
 		}
@@ -166,6 +166,7 @@ namespace RIO.BCL.Parsing {
 		}
 
 		/// <summary>
+		/// 
 		/// Modifies the RGB values of a Bitmap at a specific index in an unsafe and concurrent manner. 
 		/// This code is base on: https://csharpexamples.com/fast-image-processing-c/
 		///		from author Turgay
@@ -174,11 +175,11 @@ namespace RIO.BCL.Parsing {
 		/// <param name="bitmapIndex">The index of the Bitmap in the internal array.</param>
 		/// <param name="functor">A delegate function that performs the desired modifications on the pixel data.</param>
 		/// <returns>Returns reference to the internal array of Bitmap objects.</returns>
-		public unsafe ref Bitmap[] ModifyRgbUnsafe(int bitmapIndex, BitmapRgbDelegate functor) {
+		public unsafe ref Bitmap ModifyRgbUnsafeRef(int bitmapIndex, BitmapRgbDelegate functor) {
 			if (IsDisposed)
 				throw new BitMapParserDisposedException();
 
-			ref var bmp = ref GetBitmap(bitmapIndex);
+			ref var bmp = ref GetBitmapRef(bitmapIndex);
 
 			// Lock the bitmap bits. This will allow us to modify the bitmap data.
 			// Data is modified by traversing bitmap data (created in this method) and invoking functor.
@@ -220,7 +221,17 @@ namespace RIO.BCL.Parsing {
 
 			bmp.UnlockBits(bmpData);
 
-			return ref _bitmaps;
+			return ref bmp;
+		}
+
+		public unsafe ref Bitmap[] ModifyRgbUnsafeRef(BitmapRgbDelegate functor, params int[] bitmapIndices) {
+			_output = new Bitmap[bitmapIndices.Length];
+			var tracker = 0;
+
+			foreach (var index in bitmapIndices)
+				_output[tracker] = ModifyRgbUnsafeRef(index, functor);
+
+			return ref _output;
 		}
 
 		/// <summary>
@@ -327,6 +338,7 @@ namespace RIO.BCL.Parsing {
 			}
 		}
 
+		Bitmap[]                 _output;
 		Bitmap[]                 _bitmaps;
 		readonly ParallelOptions _parallelism;
 		readonly string[]        _paths;
