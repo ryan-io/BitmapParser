@@ -4,6 +4,7 @@ namespace RIO.BCL.Parsing {
 	/// <summary>
 	/// The ImageGrabber class retrieves and manages image files from a specified directory.
 	/// </summary>
+	[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 	public class ImageGrabber : IDisposable {
 		/// <summary>
 		/// Creates an instance of ImageGrabber asynchronously.

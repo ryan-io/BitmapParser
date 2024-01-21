@@ -6,6 +6,7 @@ namespace RIO.BCL.Parsing {
 	/// <summary>
 	/// Parses and manipulates bitmap images.
 	/// </summary>
+	[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 	public sealed class BitmapParser : IDisposable {
 		/// <summary>
 		/// A delegate type for manipulating the RGB values of a particular pixel in a bitmap.
@@ -224,7 +225,7 @@ namespace RIO.BCL.Parsing {
 			return ref bmp;
 		}
 
-		public unsafe ref Bitmap[] ModifyRgbUnsafeRef(BitmapRgbDelegate functor, params int[] bitmapIndices) {
+		public ref Bitmap[] ModifyRgbUnsafeRef(BitmapRgbDelegate functor, params int[] bitmapIndices) {
 			_output = new Bitmap[bitmapIndices.Length];
 			var tracker = 0;
 
@@ -325,6 +326,7 @@ namespace RIO.BCL.Parsing {
 		/// /
 		public BitmapParser(ref string[] imgPaths) {
 			_paths       = imgPaths;
+			_output = new Bitmap[imgPaths.Length];
 			_bitmaps     = new Bitmap[imgPaths.Length];
 			_parallelism = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
 
