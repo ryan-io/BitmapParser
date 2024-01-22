@@ -31,7 +31,7 @@ namespace RIO.BCL.Parsing {
 		/// <returns>An array of bitmaps.</returns>
 		/// <exception cref="NoImageParserAssignedException">Thrown when no image parser is assigned to the class.</exception>
 		/// <exception cref="ImageGrabberNotPrimedException">Thrown when the image grabber is not yet primed.</exception>
-		public ref Bitmap[] GetAllBitmaps() {
+		public ref Bitmap[] GetAllBitmapsRef() {
 			if (Parser == null)
 				throw new NoImageParserAssignedException();
 
@@ -50,7 +50,7 @@ namespace RIO.BCL.Parsing {
 		/// <summary>
 		/// Performs application-defined tasks associated with freeing, releasing, or resetting resources.
 		/// </summary>
-		public void Dispose() => Parser?.Dispose();
+		public void Dispose() => Parser.Dispose();
 
 		/// <summary>
 		/// Retrieves an array of prime files from the specified root directory.
@@ -78,7 +78,7 @@ namespace RIO.BCL.Parsing {
 		/// <value>
 		/// The BitmapParser for the property
 		/// </value>
-		BitmapParser? Parser { get; set; }
+		public BitmapParser Parser { get; set; } = null!;
 
 		/// <summary>
 		/// Gets or sets a value indicating whether the number is primed.
