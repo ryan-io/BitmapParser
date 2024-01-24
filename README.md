@@ -20,7 +20,7 @@
 <h3 align="center">Bitmap Parser</h3>
 
   <p align="center">
-    A fast bitmap parser. Uses GDI+ through System.Drawing.
+    A fast bitmap parser API for Windows. Uses GDI+ through system.drawing.common.
     <br />
     <br />
     <a href="https://github.com//ryan-io/CommandPipeline/issues">Report Bug</a>
@@ -158,7 +158,8 @@ if (pxlIndex % 2 == 0)
 
 - .NET 6
 * C# 10
-* Microsoft.Extensions.Logging.7.0.0
+* System.Drawing.Common
+* Microsoft.Extensions.Logging.7.0.0 (Optional)
 
 ##### Please feel free to contact me with any issues or concerns in regards to the dependencies defined above. We can work around the majority of them if needed.
 
