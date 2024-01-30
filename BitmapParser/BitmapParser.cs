@@ -224,7 +224,7 @@ namespace RIO.BCL.Parsing {
 			return ref bmp;
 		}
 
-		public unsafe ref Bitmap[] ModifyRgbUnsafeRef(BitmapRgbDelegate functor, params int[] bitmapIndices) {
+		public ref Bitmap[] ModifyRgbUnsafeRef(BitmapRgbDelegate functor, params int[] bitmapIndices) {
 			_output = new Bitmap[bitmapIndices.Length];
 			var tracker = 0;
 
@@ -325,6 +325,7 @@ namespace RIO.BCL.Parsing {
 		/// /
 		public BitmapParser(ref string[] imgPaths) {
 			_paths       = imgPaths;
+			_output      = new Bitmap[imgPaths.Length];
 			_bitmaps     = new Bitmap[imgPaths.Length];
 			_parallelism = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
 
