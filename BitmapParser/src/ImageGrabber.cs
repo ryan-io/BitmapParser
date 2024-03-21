@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace RIO.BCL.Parsing {
+namespace BitmapParser {
 	/// <summary>
 	/// The ImageGrabber class retrieves and manages image files from a specified directory.
 	/// </summary>
@@ -20,32 +20,32 @@ namespace RIO.BCL.Parsing {
 			var grabber = new ImageGrabber(flags);
 			var files   = grabber.PrimeFiles(rootDirectoryPath, searchOption);
 
-			await Task.Run((Action)(() => grabber.Parser = new BitmapParser(ref files)));
+			//await Task.Run((Action)(() => grabber.Parser = new BitmapParser(files)));
 
 			return grabber;
 		}
 
 		/// <summary>
-		/// Retrieves all bitmaps from the assigned image parser.
+		/// Retrieves all Bitmap objects from the BitmapParser instance.
 		/// </summary>
-		/// <returns>An array of bitmaps.</returns>
-		/// <exception cref="NoImageParserAssignedException">Thrown when no image parser is assigned to the class.</exception>
-		/// <exception cref="ImageGrabberNotPrimedException">Thrown when the image grabber is not yet primed.</exception>
-		public ref Bitmap[] GetAllBitmapsRef() {
+		/// <returns>A reference to the internal array of Bitmap objects.</returns>
+		/// <exception cref="NoImageParserAssignedException">Thrown when the parser is null or not assigned.</exception>
+		/// <exception cref="ImageGrabberNotPrimedException">Thrown when CreateAsync fails and does not create a valid instance of ImageGrabber.</exception>
+		public Bitmap[] GetAllBitmapsRef() {
 			if (Parser == null)
 				throw new NoImageParserAssignedException();
 
 			if (!IsPrimed)
 				throw new ImageGrabberNotPrimedException();
 
-			return ref Parser.GetAllBitmapsRef();
+			return Parser.GetAllOriginalBitmaps();
 		}
 
 		/// <summary>
 		/// Returns the extensions associated with the type.
 		/// </summary>
 		/// <returns>An array of strings representing the extensions associated with the type.</returns>
-		public ref readonly string[] GetTypeExtensions() => ref _extensions;
+		public ref readonly string[] GetTypeExtensions() => ref m_extensions;
 
 		/// <summary>
 		/// Performs application-defined tasks associated with freeing, releasing, or resetting resources.
@@ -63,7 +63,7 @@ namespace RIO.BCL.Parsing {
 				throw new ArgumentNullException(nameof(rootDirectoryPath));
 
 			var files = Directory.EnumerateFiles(rootDirectoryPath, "*.*", searchOption)
-			                     .Where(file => _extensions.Contains(Path.GetExtension(file).TrimStart('.')
+			                     .Where(file => m_extensions.Contains(Path.GetExtension(file).TrimStart('.')
 			                                                             .ToLowerInvariant()))
 			                     .ToArray();
 
@@ -106,48 +106,9 @@ namespace RIO.BCL.Parsing {
 					extensions.Add("jpg");
 			}
 
-			_extensions = extensions.ToArray();
+			m_extensions = extensions.ToArray();
 		}
 
-		readonly string[] _extensions;
-	}
-
-	/// <summary>
-	/// Represents the available image types.
-	/// </summary>
-	[Serializable, Flags]
-	public enum ImageType {
-		PNG  = 1 << 0,
-		JPG  = 1 << 1,
-		JPEG = 1 << 2,
-		BMP  = 1 << 3,
-		ALL  = 1 << 4
-	}
-
-	/// <summary>
-	/// Represents an exception that is thrown when an instance of ImageGrabber exists, but no file directory has been provided.
-	/// </summary>
-	public class ImageGrabberNotPrimedException : Exception {
-		/// <summary>
-		/// Gets the error message that describes the exceptional condition.
-		/// </summary>
-		/// <value>
-		/// The error message that explains the reason for the exception.
-		/// </value>
-		public override string Message
-			=> "An instance of ImageGrabber exists, but no file directory has been provided.";
-	}
-
-	/// <summary>
-	/// Represents an exception that is thrown when no image parser has been assigned.
-	/// </summary>
-	public class NoImageParserAssignedException : Exception {
-		/// <summary>
-		/// Gets the message for when no image parser has been assigned.
-		/// </summary>
-		/// <value>
-		/// The message for when no image parser has been assigned.
-		/// </value>
-		public override string Message => "No image parser has been assigned";
+		readonly string[] m_extensions;
 	}
 }
