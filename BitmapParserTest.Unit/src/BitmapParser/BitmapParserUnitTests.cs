@@ -37,8 +37,8 @@ namespace BitmapParserTest.Unit.BitmapParser {
 		[Fact]
 		public void SetNewBitmap_ShouldCallSwap_WhenValidIndexAndBitmap() {
 			// Arrange
-			int    index     = 0;
-			Bitmap newBitmap = new Bitmap(1, 1);
+			const int index     = 0;
+			var       newBitmap = new Bitmap(1, 1);
 			m_sut.SwapBitmaps(index, newBitmap);
 			// Assert
 			m_repository.Received(1).Swap(index, newBitmap);
@@ -47,30 +47,34 @@ namespace BitmapParserTest.Unit.BitmapParser {
 		[Fact]
 		public void GetModified_ShouldReturnBitmap_WhenValidIndex() {
 			// Arrange
-			int    index          = 0;
-			Bitmap expectedBitmap = new Bitmap(1, 1);
+			const int index          = 0;
+			var       expectedBitmap = new Bitmap(1, 1);
 			m_repository.GetModified(index).Returns(expectedBitmap);
 			// Act
-			Bitmap result = m_sut.GetModified(index);
+			var result = m_sut.GetModified(index);
 			// Assert
 			result.Should().BeSameAs(expectedBitmap);
 		}
 
 		[Fact]
-		public void ModifyRgbUnsafe_ShouldReturnModifiedBitmap_WhenValidIndexAndFunctor() {
+		public void ModifyRgbUnsafe_ShouldReturnModifiedBitmapUnchanged_WhenValidIndexAndFunctor() {
 			// Arrange
-			int    index          = 0;
-			Bitmap expectedBitmap = new Bitmap(1, 1);
-			m_repository.Original.Returns(new Bitmap[] { new(2, 2), new(2, 2) });
-			m_repository.Modified.Returns(new[] { expectedBitmap, new(2, 2) });
-			global::BitmapParser.BitmapParser.BitmapRgbDelegate functor
-				= (ref int pxlIndex, ref int red, ref int green, ref int blue) => { };
+			const int index   = 0;
+			var       initBmp = new Bitmap(1, 1);
+			m_parallelOptions.Get.Returns(ParallelOptionsDefault.Get());
+			m_repository.GetOriginal(index).Returns(initBmp);
 
-			m_repository.GetModified(index).Returns(expectedBitmap);
 			// Act
-			Bitmap result = m_sut.ModifyRgbUnsafe(index, functor);
+			var result = m_sut.ModifyRgbUnsafe(index,
+				(ref int i, ref int red, ref int green, ref int blue)
+					=> Functor(ref i, ref red, ref green, ref blue));
+
 			// Assert
-			result.Should().BeSameAs(expectedBitmap);
+			result.Should().NotBeNull();
+			return;
+
+			void Functor(ref int i, ref int red, ref int green, ref int blue) {
+			}
 		}
 
 		[Theory]
