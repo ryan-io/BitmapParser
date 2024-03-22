@@ -30,12 +30,18 @@ namespace BitmapParser {
 		/// <summary>
 		/// Returns a reference to the internal original array of Bitmap objects.
 		/// </summary>
-		public Bitmap[] GetAllOriginalBitmaps() => m_repository.Original;
-		
+		public Bitmap[] GetAllOriginalBitmaps() {
+			ValidateInternalState();
+			return m_repository.Original;
+		}
+
 		/// <summary>
 		/// Returns a reference to the internal modified array of Bitmap objects.
 		/// </summary>
-		public Bitmap[] GetAllModifiedBitmaps() => m_repository.Modified;
+		public Bitmap[] GetAllModifiedBitmaps() {
+			ValidateInternalState();
+			return m_repository.Modified;
+		}
 
 		// /// <summary>
 		// /// Returns a copy array of all Bitmap objects.
@@ -51,9 +57,7 @@ namespace BitmapParser {
 		/// <exception cref="NullReferenceException">Thrown when the internal Bitmap array has not been initialized.</exception>
 		/// <exception cref="IndexOutOfRangeException">Thrown when the provided index is outside the bounds of the Bitmap array.</exception>
 		public Bitmap GetOriginal(int bitmapIndex) {
-			if (IsDisposed)
-				throw new BitMapParserDisposedException();
-
+			ValidateInternalState();
 			return m_repository.GetOriginal(bitmapIndex);
 		}
 
@@ -357,6 +361,13 @@ namespace BitmapParser {
 			return output;
 		}
 
+		/// Validates the internal state of the BitmapParser instance.
+		/// @throws BitMapParserDisposedException if the instance is disposed.
+		/// /
+		void ValidateInternalState() {
+			if (IsDisposed)
+				throw new BitMapParserDisposedException();
+		}
 
 		/// <summary>
 		/// Guards the RGB value to ensure it is within the valid range.

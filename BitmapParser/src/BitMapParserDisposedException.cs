@@ -14,6 +14,6 @@ public class BitMapParserDisposedException : Exception {
 	/// </value>
 	public override string Message => EXCEPTION_BITMAP_PARSER_DISPOSED;
 
-	const string EXCEPTION_BITMAP_PARSER_DISPOSED =
+	internal const string EXCEPTION_BITMAP_PARSER_DISPOSED =
 		"Instance of BitmapParser has been disposed. No further actions can be taken. Please create a new parser.";
 }

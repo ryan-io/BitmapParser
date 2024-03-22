@@ -26,7 +26,13 @@ public class BitmapRepository : IBitmapRepository {
 	/// Gets the number of bitmap images in the repository.
 	/// </summary>
 	/// <returns>The number of bitmap images.</returns>
-	public int Count => m_original.Length;
+	public int Count {
+		get {
+			if (m_original == null)
+				throw new NullReferenceException(EXCEPTION_NULL_ORIGINAL_ARRAY);
+			return m_original.Length;
+		}
+	}
 
 	// /// <summary>
 	// /// Represents a parser that can parse and manipulate bitmap images.
