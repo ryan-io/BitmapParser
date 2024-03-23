@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Runtime.CompilerServices;
 
 namespace BitmapParser {
 	/// <summary>
@@ -43,12 +44,6 @@ namespace BitmapParser {
 			return m_repository.Modified;
 		}
 
-		// /// <summary>
-		// /// Returns a copy array of all Bitmap objects.
-		// /// </summary>
-		// /// <returns>An array of Bitmap objects.</returns>
-		// public Bitmap[] GetAllBitmaps() => m_repository.Original;
-
 		/// <summary>
 		/// Retrieves a specific Bitmap object from the BitmapParser's array, using a provided index.
 		/// </summary>
@@ -75,29 +70,19 @@ namespace BitmapParser {
 			return m_repository.GetModified(bitmapIndex);
 		}
 
-		// /// <summary>
-		// /// Retrieves a specific Bitmap object from the BitmapParser's array, using a provided index.
-		// /// </summary>
-		// /// <param name="bitmapIndex">The index of the Bitmap object to be retrieved.</param>
-		// /// <returns>A reference to the Bitmap object at the specified index.</returns>
-		// /// <exception cref="NullReferenceException">Thrown when the internal Bitmap array has not been initialized.</exception>
-		// /// <exception cref="IndexOutOfRangeException">Thrown when the provided index is outside the bounds of the Bitmap array.</exception>
-		// public Bitmap GetOriginal(int bitmapIndex) {
-		// 	if (IsDisposed)
-		// 		throw new BitMapParserDisposedException();
-		//
-		// 	return m_repository.GetOriginal(bitmapIndex);
-		// }
-
 		/// <summary>
 		/// Returns a read-only reference to the array of the paths to all images.
 		/// </summary>
 		public string[] GetPaths() => m_repository.Paths;
 
-		// /// <summary>
-		// /// Returns a copy array of the paths to all images.
-		// /// </summary>
-		// public string[] GetAllPaths() => m_repository.Paths;
+		/// <summary>
+		/// Retrieves the path of a specific bitmap image.
+		/// </summary>
+		/// <param name="index">Index position of the image path in the list of paths.</param>
+		/// <returns>Returns a reference to the path string of the image.</returns>
+		/// <exception cref="NullReferenceException">Thrown when the list of paths is null.</exception>
+		/// <exception cref="IndexOutOfRangeException">Thrown when index is out of the range of the list of paths.</exception>
+		public string GetPath(int index) => m_repository.GetPath(index);
 
 		/// <summary>
 		/// Scales the specified bitmap at the given index and replaces it with the new scaled bitmap.
@@ -174,24 +159,6 @@ namespace BitmapParser {
 		}
 
 		/// <summary>
-		/// Retrieves a reference to path of a specific bitmap image.
-		/// </summary>
-		/// <param name="index">Index position of the image path in the list of paths.</param>
-		/// <returns>Returns a reference to the path string of the image.</returns>
-		/// <exception cref="NullReferenceException">Thrown when the list of paths is null.</exception>
-		/// <exception cref="IndexOutOfRangeException">Thrown when index is out of the range of the list of paths.</exception>
-		public string GetPathRef(int index) => m_repository.GetPath(index);
-
-		/// <summary>
-		/// Retrieves the path of a specific bitmap image.
-		/// </summary>
-		/// <param name="index">Index position of the image path in the list of paths.</param>
-		/// <returns>Returns a reference to the path string of the image.</returns>
-		/// <exception cref="NullReferenceException">Thrown when the list of paths is null.</exception>
-		/// <exception cref="IndexOutOfRangeException">Thrown when index is out of the range of the list of paths.</exception>
-		public string GetPath(int index) => m_repository.GetPath(index);
-
-		/// <summary>
 		/// Releases the resources used by the BitmapParser class.
 		/// </summary>
 		public void Dispose() {
@@ -211,7 +178,7 @@ namespace BitmapParser {
 		/// </summary>
 		/// <param name="bitmapIndex">The index of the Bitmap in the internal array.</param>
 		/// <param name="functor">A delegate function that performs the desired modifications on the pixel data.</param>
-		/// <returns>Returns reference to the internal array of Bitmap objects.</returns>
+		/// <returns>Returns a copy of the bitmap at index bitMapIndex</returns>
 		public unsafe Bitmap ModifyRgbUnsafeRef(int bitmapIndex, BitmapRgbDelegate functor) {
 			if (IsDisposed)
 				throw new BitMapParserDisposedException();
@@ -323,7 +290,6 @@ namespace BitmapParser {
 			return ModifyAllRgbUnsafeRef(functor);
 		}
 
-
 		/// <summary>
 		/// Asynchronously saves Bitmap objects to the files at a specified path.
 		/// </summary>
@@ -378,6 +344,7 @@ namespace BitmapParser {
 		/// </remarks>
 		/// <param name="value">The RGB value to be guarded.</param>
 		/// <returns>None.</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static void GuardRgbValue(ref int value) {
 			if (value < 0)
 				value = 0;
@@ -385,7 +352,6 @@ namespace BitmapParser {
 			if (value > 255)
 				value = 255;
 		}
-
 
 		/// <summary>
 		/// Creates a new <see cref="Rectangle"/> object with the specified dimensions based on the provided <see cref="Bitmap"/>.

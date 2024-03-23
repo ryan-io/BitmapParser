@@ -215,6 +215,9 @@ public class BitmapRepository : IBitmapRepository {
 		if (bitmapIndex > m_paths.Length || bitmapIndex < 0)
 			throw new IndexOutOfRangeException(EXCEPTION_INDEX_OUT_OF_RANGE);
 
+		if (m_paths == null)
+			throw new NullReferenceException(EXCEPTION_NULL_PATHS_ARRAY);
+		
 		return m_paths[bitmapIndex];
 	}
 

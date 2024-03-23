@@ -1,8 +1,10 @@
 ﻿using System.Drawing;
+using System.Runtime.InteropServices;
 using BitmapParser;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using NSubstitute.ReturnsExtensions;
 using Xunit;
 
 
@@ -81,6 +83,7 @@ namespace BitmapParserTest.Unit.BitmapParser {
 			// Act
 			var result = m_sut.GetModified(index);
 			// Assert
+			m_repository.Received(1).GetModified(index);
 			result.Should().BeSameAs(expectedBitmap);
 		}
 
@@ -94,13 +97,12 @@ namespace BitmapParserTest.Unit.BitmapParser {
 			              .WithMessage(BitMapParserDisposedException.EXCEPTION_BITMAP_PARSER_DISPOSED);
 		}
 
-
 		[Fact]
 		public void GetAllOriginalBitmaps_ShouldReturnThrowBitMapParserDisposedException_WhenBitmapParserIsDisposed() {
 			m_sut.Dispose();
 
 			Action getAllOriginal = () => m_sut.GetAllOriginalBitmaps();
-			
+
 			getAllOriginal.Should().Throw<BitMapParserDisposedException>()
 			              .WithMessage(BitMapParserDisposedException.EXCEPTION_BITMAP_PARSER_DISPOSED);
 		}
@@ -113,10 +115,11 @@ namespace BitmapParserTest.Unit.BitmapParser {
 			m_repository.GetOriginal(index).Returns(MockArrays[index]);
 
 			var original = m_sut.GetOriginal(index);
-			
+
+			m_repository.Received(1).GetOriginal(Arg.Is(index));
 			original.Should().BeEquivalentTo(MockArrays[index]);
 		}
-		
+
 		[Theory]
 		[InlineData(0)]
 		[InlineData(10)]
@@ -125,7 +128,8 @@ namespace BitmapParserTest.Unit.BitmapParser {
 			m_repository.GetModified(index).Returns(MockArrays[index]);
 
 			var original = m_sut.GetModified(index);
-			
+
+			m_repository.Received(1).GetModified(Arg.Is(index));
 			original.Should().BeEquivalentTo(MockArrays[index]);
 		}
 
@@ -143,10 +147,19 @@ namespace BitmapParserTest.Unit.BitmapParser {
 					=> Functor(ref i, ref red, ref green, ref blue));
 
 			// Assert
+			m_repository.Received(1).GetOriginal(Arg.Is(index));
+
+			m_sut.IsDisposed.Should().BeFalse();
 			result.Should().NotBeNull();
+			result.Should().NotBeSameAs(initBmp);
 			return;
 
 			void Functor(ref int i, ref int red, ref int green, ref int blue) {
+				var intIndex = i;
+				red++;
+				green++;
+				blue++;
+				var test = index;
 			}
 		}
 
@@ -183,6 +196,104 @@ namespace BitmapParserTest.Unit.BitmapParser {
 			action.Should()
 			      .Throw<NullReferenceException>()
 			      .WithMessage(BitmapRepository.EXCEPTION_NULL_MODIFIED_ARRAY);
+		}
+
+		[Fact]
+		public void GetPaths_ShouldReturnPopulatedStringArray_WhenInValidState() {
+			// Arrange
+			m_repository.Paths.Returns(Enumerable.Repeat("Location", 10).ToArray());
+
+			// Act
+			var paths = m_sut.GetPaths();
+
+			// Assert
+			paths.Should().NotBeNull();
+			paths.Should().NotBeEmpty();
+			paths.Length.Should().Be(m_repository.Paths.Length);
+		}
+
+
+		[Fact]
+		public void GetPaths_ShouldHaveSameLengthAsModifiedAndOriginal_WhenInValidState() {
+			// Arrange
+			m_repository.Paths.Returns(Enumerable.Repeat("Location",          10).ToArray());
+			m_repository.Original.Returns(Enumerable.Repeat(new Bitmap(1, 1), 10).ToArray());
+			m_repository.Modified.Returns(Enumerable.Repeat(new Bitmap(1, 1), 10).ToArray());
+
+			// Act
+			var paths = m_sut.GetPaths();
+
+			// Assert
+			paths.Length.Should().Be(m_repository.Original.Length);
+			paths.Length.Should().Be(m_repository.Modified.Length);
+		}
+
+		[Fact]
+		public void GetPaths_ShouldThrowException_WhenPathsIsNullOrEmpty() {
+			// Arrange
+			var e = new NullReferenceException(BitmapRepository.EXCEPTION_NULL_PATHS_ARRAY);
+			m_repository.Paths.Throws(e);
+
+			// Act
+			Action pathAction = () => m_sut.GetPaths();
+
+			// Assert
+			pathAction.Should()
+			          .Throw<NullReferenceException>()
+			          .WithMessage(BitmapRepository.EXCEPTION_NULL_PATHS_ARRAY);
+		}
+
+		[Theory]
+		[InlineData(1)]
+		[InlineData(10)]
+		[InlineData(100)]
+		public void GetPath_ShouldReturnNonEmptyString_WhenValidIndexIsPassed(int index) {
+			// Arrange
+			m_repository.GetPath(index).ReturnsForAnyArgs("location");
+			// Act
+			var path = m_sut.GetPath(index);
+
+			// Assert
+			path.Should().NotBeNullOrEmpty();
+		}
+		
+		[Theory]
+		[InlineData(-1)]
+		[InlineData(10)]
+		[InlineData(100)]
+		public void GetPath_ShouldThrowIndexOutOfRangeException_WhenIndexOutSideOfBounds(int index) {
+			// Arrange
+			m_repository.GetPath(index)
+			            .Throws(new IndexOutOfRangeException(BitmapRepository.EXCEPTION_INDEX_OUT_OF_RANGE));
+			
+			// Act
+			var pathResponse =() => m_sut.GetPath(index);
+
+			// Assert
+			pathResponse.Should()
+			            .Throw<IndexOutOfRangeException>()
+			            .WithMessage(BitmapRepository.EXCEPTION_INDEX_OUT_OF_RANGE);
+		}
+		
+	[Fact]
+		public void GetPath_ShouldNullReferenceException_WhenPathsIsNull() {
+			// Arrange
+			m_repository.GetPath(Arg.Any<int>())
+			            .Throws(new NullReferenceException(BitmapRepository.EXCEPTION_NULL_PATHS_ARRAY));
+			
+			// Act
+			var pathResponse =() => m_sut.GetPath(1);
+
+			// Assert
+			pathResponse.Should()
+			            .Throw<NullReferenceException>()
+			            .WithMessage(BitmapRepository.EXCEPTION_NULL_PATHS_ARRAY);
+		}
+
+		[Fact]
+		public void Dispose_ShouldCallDisposeOnRepositoryAndImageSaver() {
+			m_sut.Dispose();
+			m_repository.Received(1).Dispose();
 		}
 
 		readonly global::BitmapParser.BitmapParser m_sut;
