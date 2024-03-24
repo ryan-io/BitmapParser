@@ -1,10 +1,8 @@
 ﻿using System.Drawing;
-using System.Runtime.InteropServices;
 using BitmapParser;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
-using NSubstitute.ReturnsExtensions;
 using Xunit;
 
 
@@ -256,7 +254,7 @@ namespace BitmapParserTest.Unit.BitmapParser {
 			// Assert
 			path.Should().NotBeNullOrEmpty();
 		}
-		
+
 		[Theory]
 		[InlineData(-1)]
 		[InlineData(10)]
@@ -265,24 +263,24 @@ namespace BitmapParserTest.Unit.BitmapParser {
 			// Arrange
 			m_repository.GetPath(index)
 			            .Throws(new IndexOutOfRangeException(BitmapRepository.EXCEPTION_INDEX_OUT_OF_RANGE));
-			
+
 			// Act
-			var pathResponse =() => m_sut.GetPath(index);
+			var pathResponse = () => m_sut.GetPath(index);
 
 			// Assert
 			pathResponse.Should()
 			            .Throw<IndexOutOfRangeException>()
 			            .WithMessage(BitmapRepository.EXCEPTION_INDEX_OUT_OF_RANGE);
 		}
-		
-	[Fact]
+
+		[Fact]
 		public void GetPath_ShouldNullReferenceException_WhenPathsIsNull() {
 			// Arrange
 			m_repository.GetPath(Arg.Any<int>())
 			            .Throws(new NullReferenceException(BitmapRepository.EXCEPTION_NULL_PATHS_ARRAY));
-			
+
 			// Act
-			var pathResponse =() => m_sut.GetPath(1);
+			var pathResponse = () => m_sut.GetPath(1);
 
 			// Assert
 			pathResponse.Should()
@@ -290,10 +288,109 @@ namespace BitmapParserTest.Unit.BitmapParser {
 			            .WithMessage(BitmapRepository.EXCEPTION_NULL_PATHS_ARRAY);
 		}
 
+		[Theory]
+		[InlineData(0, 0.8f)]
+		[InlineData(1, 1.5f)]
+		public void ScaleBitmapAndSetNew_ShouldScaleAndReplaceBitmap_AtGivenIndex(int index, float scale) {
+			var bmpOrigin = new Bitmap(1, 1);
+			var bmp       = new Bitmap(1, 1);
+			var criteria  = BitmapResizeCriteria.Default();
+
+			m_repository.GetOriginal(index).Returns(bmpOrigin);
+
+			// Act
+			m_sut.ScaleBitmapAndSetNew(index, scale, criteria);
+			m_repository.GetOriginal(index).Returns(bmp);
+
+			// Assert
+			m_repository.Received().Swap(index, Arg.Any<Bitmap>());
+		}
+
+		[Fact]
+		public void ScaleBitmapAndSetNew_WhenIndexIsValid_CallsSwapOnRepository() {
+			// Arrange
+			var validIndex  = 1;
+			var scale       = 1.0f;
+			var criteria    = BitmapResizeCriteria.Default();
+			var dummyBitmap = new Bitmap(100, 100);
+			m_repository.GetOriginal(validIndex).Returns(dummyBitmap);
+
+			// Act
+			m_sut.ScaleBitmapAndSetNew(validIndex, scale, criteria);
+
+			// Assert
+			m_repository.Received(1)
+			            .Swap(validIndex, Arg.Is<Bitmap>(
+				             bmp => Math.Abs(bmp.Width  - dummyBitmap.Width  * scale) < 0.1f &&
+				                    Math.Abs(bmp.Height - dummyBitmap.Height * scale) < 0.1f));
+		}
+
+		[Theory]
+		[InlineData(0)]
+		[InlineData(1)]
+		public void SwapBitmaps_SwapsABitmapAtIndex_WhenProvidedWithNewBitmap(int index) {
+			var bmp = new Bitmap(1, 1);
+
+			m_sut.SwapBitmaps(index, bmp);
+
+			m_repository.Received(1).Swap(index, bmp);
+		}
+
+		[Fact]
+		public void SwapBitmaps_ThrowsNullReferenceException_WhenOriginalArrayIsNull() {
+			var index = 1;
+			var bmp   = new Bitmap(1, 1);
+			m_repository.Swap(1, bmp)
+			            .Throws(new NullReferenceException(BitmapRepository.EXCEPTION_NULL_PATHS_ARRAY));
+
+			Action swap = () => _ = m_sut.SwapBitmaps(index, bmp);
+			swap.Should().Throw<NullReferenceException>()
+			    .WithMessage(BitmapRepository.EXCEPTION_NULL_PATHS_ARRAY);
+
+			m_repository.Received(1).Swap(Arg.Any<int>(), Arg.Any<Bitmap>());
+		}
+
+		[Fact]
+		public void SwapBitmaps_ThrowsEXCEPTION_INDEX_OUT_OF_RANGE_WhenOriginalArrayIsNull() {
+			var index = -1;
+			var bmp   = new Bitmap(1, 1);
+			m_repository.Swap(index, bmp)
+			            .Throws(new IndexOutOfRangeException(BitmapRepository.EXCEPTION_INDEX_OUT_OF_RANGE));
+
+			Action swap = () => _ = m_sut.SwapBitmaps(index, bmp);
+			swap.Should().Throw<IndexOutOfRangeException>()
+			    .WithMessage(BitmapRepository.EXCEPTION_INDEX_OUT_OF_RANGE);
+
+			m_repository.Received(1).Swap(-1, Arg.Any<Bitmap>());
+		}
+
+		[Theory]
+		[InlineData(1,   1,   1)]
+		[InlineData(10,  10,  0.5f)]
+		[InlineData(100, 100, 2)]
+		[InlineData(1,   1,   -1)]
+		public void GetNewScaledBitmap_ShouldClampAndEnsureAbsValueOfScale_WhenInputIsValid(
+			int width, int height, float scale) {
+			const int max                  = global::BitmapParser.BitmapParser.MAX_BITMAP_DIMENSION;
+			var       criteria             = BitmapResizeCriteria.Default();
+			var       originBmp            = new Bitmap(width, height);
+			var       expectedScaledWidth  = Math.Clamp((int)(originBmp.Width * scale), 1, max);
+			var       expectedScaledHeight = Math.Clamp((int)(originBmp.Height * scale), 1, max);;
+
+			m_repository.GetOriginal(0).Returns(originBmp);
+
+			var scaledBitmap = m_sut.GetNewScaledBitmap(0, scale, criteria);
+			scaledBitmap.Width.Should().Be(expectedScaledWidth);
+			scaledBitmap.Height.Should().Be(expectedScaledHeight);
+		}
+
+		
+		
 		[Fact]
 		public void Dispose_ShouldCallDisposeOnRepositoryAndImageSaver() {
 			m_sut.Dispose();
 			m_repository.Received(1).Dispose();
+			m_sut.IsDisposed.Should().BeTrue();
 		}
 
 		readonly global::BitmapParser.BitmapParser m_sut;

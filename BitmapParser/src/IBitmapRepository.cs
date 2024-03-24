@@ -108,7 +108,7 @@ public interface IBitmapRepository : IDisposable {
 	/// <param name="bmp">The new Bitmap object to be swapped.</param>
 	/// <exception cref="NullReferenceException">Thrown when the internal Bitmap array has not been initialized.</exception>
 	/// <exception cref="IndexOutOfRangeException">Thrown when the provided index is outside the bounds of the Bitmap array.</exception>
-	void Swap(int index, Bitmap bmp);
+	Bitmap Swap(int index, Bitmap bmp);
 
 	// /// <summary>
 	// /// Retrieves the file path associated with a specific bitmap index.

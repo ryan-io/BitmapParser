@@ -34,20 +34,6 @@ public class BitmapRepository : IBitmapRepository {
 		}
 	}
 
-	// /// <summary>
-	// /// Represents a parser that can parse and manipulate bitmap images.
-	// /// </summary>
-	// /// <remarks>
-	// /// The <see cref="BitmapParser"/> class provides methods for retrieving, modifying, and saving bitmap images.
-	// /// </remarks>
-	// public string[] Paths {
-	// 	get {
-	// 		if (m_paths == null || m_paths.Length < 1)
-	// 			throw new NullReferenceException(EXCEPTION_NULL_PATHS_ARRAY);
-	// 		return m_paths;
-	// 	}
-	// }
-
 	/// <summary>
 	/// Represents a parser that can parse and manipulate bitmap images.
 	/// </summary>
@@ -61,20 +47,6 @@ public class BitmapRepository : IBitmapRepository {
 			return m_paths;
 		}
 	}
-
-	// /// <summary>
-	// /// Gets or sets the modified bitmaps.
-	// /// </summary>
-	// /// <remarks>
-	// /// The modified bitmaps are the result of parsing and manipulating the original bitmaps.
-	// /// </remarks>
-	// public Bitmap[] Modified {
-	// 	get {
-	// 		if (m_modified == null || m_modified.Length < 1)
-	// 			throw new NullReferenceException(EXCEPTION_NULL_MODIFIED_ARRAY);
-	// 		return m_modified;
-	// 	}
-	// }
 
 	/// <summary>
 	/// Represents a reference to the modified bitmap images provided by a <see cref="BitmapRepository"/>.
@@ -91,16 +63,6 @@ public class BitmapRepository : IBitmapRepository {
 			return m_modified;
 		}
 	}
-
-	// /// BitmapParser class is responsible for parsing and manipulating bitmap images.
-	// /// /
-	// public Bitmap[] Original {
-	// 	get {
-	// 		if (m_original == null || m_original.Length < 1)
-	// 			throw new NullReferenceException(EXCEPTION_NULL_ORIGINAL_ARRAY);
-	// 		return m_original;
-	// 	}
-	// }
 
 	/// <summary>
 	/// Represents a reference to the original bitmap images provided by the BitmapProvider.
@@ -121,23 +83,6 @@ public class BitmapRepository : IBitmapRepository {
 			return m_original;
 		}
 	}
-
-	// /// <summary>
-	// /// Retrieves a specific Bitmap object from the BitmapParser's array, using a provided index.
-	// /// </summary>
-	// /// <param name="bitmapIndex">The index of the Bitmap object to be retrieved.</param>
-	// /// <returns>A reference to the Bitmap object at the specified index.</returns>
-	// /// <exception cref="NullReferenceException">Thrown when the internal Bitmap array has not been initialized.</exception>
-	// /// <exception cref="IndexOutOfRangeException">Thrown when the provided index is outside the bounds of the Bitmap array.</exception>
-	// public ref Bitmap GetOriginal(int bitmapIndex) {
-	// 	if (m_original == null)
-	// 		throw new NullReferenceException(EXCEPTION_NULL_ORIGINAL_ARRAY);
-	//
-	// 	if (bitmapIndex > m_original.Length - 1 || bitmapIndex < 0)
-	// 		throw new IndexOutOfRangeException(EXCEPTION_INDEX_OUT_OF_RANGE);
-	//
-	// 	return m_original[bitmapIndex];
-	// }
 
 	/// <summary>
 	/// Retrieves a specific Bitmap object from the BitmapParser's array, using a provided index.
@@ -180,7 +125,7 @@ public class BitmapRepository : IBitmapRepository {
 	/// <param name="bmp">The new Bitmap object to be swapped.</param>
 	/// <exception cref="NullReferenceException">Thrown when the internal Bitmap array has not been initialized.</exception>
 	/// <exception cref="IndexOutOfRangeException">Thrown when the provided index is outside the bounds of the Bitmap array.</exception>
-	public void Swap(int index, Bitmap bmp) {
+	public Bitmap Swap(int index, Bitmap bmp) {
 		if (m_modified == null)
 			throw new NullReferenceException(EXCEPTION_NULL_ORIGINAL_ARRAY);
 
@@ -189,24 +134,8 @@ public class BitmapRepository : IBitmapRepository {
 
 		m_modified[index].Dispose();
 		m_modified[index] = bmp;
+		return m_modified[index];
 	}
-
-	// /// <summary>
-	// /// Retrieves the file path associated with a specific bitmap index.
-	// /// </summary>
-	// /// <param name="bitmapIndex">The index of the bitmap to retrieve the file path for.</param>
-	// /// <returns>The file path associated with the specified bitmap index.</returns>
-	// /// <exception cref="NullReferenceException">Thrown when the internal paths array has not been initialized.</exception>
-	// /// <exception cref="IndexOutOfRangeException">Thrown when the provided index is outside the bounds of the paths array.</exception>
-	// public string GetPath(int bitmapIndex) {
-	// 	if (m_paths == null || m_paths.Length < 1)
-	// 		throw new NullReferenceException(EXCEPTION_NULL_PATHS_ARRAY);
-	//
-	// 	if (bitmapIndex > m_paths.Length || bitmapIndex < 0)
-	// 		throw new IndexOutOfRangeException(EXCEPTION_INDEX_OUT_OF_RANGE);
-	//
-	// 	return m_paths[bitmapIndex];
-	// }
 
 	/// <summary>
 	/// Represents a repository for bitmap images.

@@ -8,6 +8,15 @@ namespace BitmapParser;
 /// Represents the criteria used to resize a bitmap image.
 /// </summary>
 public readonly struct BitmapResizeCriteria {
+	public static BitmapResizeCriteria Default() {
+		return new BitmapResizeCriteria(
+			CompositingMode.SourceCopy,
+			CompositingQuality.HighQuality,
+			InterpolationMode.Bicubic,
+			SmoothingMode.HighSpeed,
+			PixelOffsetMode.None);
+	}
+
 	/// <summary>
 	/// Gets the compositing mode for this property.
 	/// </summary>

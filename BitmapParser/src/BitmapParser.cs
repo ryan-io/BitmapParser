@@ -105,8 +105,8 @@ namespace BitmapParser {
 		/// </summary>
 		/// <param name="bitmapIndex">The index at which to set the new bitmap.</param>
 		/// <param name="newBmp">The new bitmap to set at the specified index.</param>
-		public void SwapBitmaps(int bitmapIndex, Bitmap newBmp) {
-			m_repository.Swap(bitmapIndex, newBmp);
+		public Bitmap SwapBitmaps(int bitmapIndex, Bitmap newBmp) {
+			return m_repository.Swap(bitmapIndex, newBmp);
 		}
 
 		/// <summary>
@@ -120,7 +120,7 @@ namespace BitmapParser {
 		/// Reference -> //https://stackoverflow.com/questions/1922040/how-to-resize-an-image-c-sharp
 		public Bitmap GetNewScaledBitmap(int bitmapIndex, float scale, BitmapResizeCriteria criteria) {
 			var bmp = GetOriginal(bitmapIndex);
-			return GetNewScaledBitmap(ref bmp, scale, criteria);
+			return GetNewScaledBitmap(bmp, scale, criteria);
 		}
 
 		/// <summary>
@@ -133,10 +133,10 @@ namespace BitmapParser {
 		/// The new scaled bitmap with the specified size and quality settings.
 		/// </returns>
 		/// Reference -> https://stackoverflow.com/questions/1922040/how-to-resize-an-image-c-sharp
-		public static Bitmap GetNewScaledBitmap(ref Bitmap bmp, float scale, BitmapResizeCriteria criteria) {
+		public static Bitmap GetNewScaledBitmap(Bitmap bmp, float scale, BitmapResizeCriteria criteria) {
 			scale = MathF.Abs(scale);
-			var scaledWidth  = (int)(bmp.Width  * scale);
-			var scaledHeight = (int)(bmp.Height * scale);
+			var scaledWidth  = Math.Clamp((int)(bmp.Width  * scale), 1, MAX_BITMAP_DIMENSION) ;
+			var scaledHeight = Math.Clamp((int)(bmp.Height * scale), 1, MAX_BITMAP_DIMENSION);
 
 			var scaledBmp  = new Bitmap(scaledWidth, scaledHeight);
 			var scaledRect = GetNewRect(ref scaledBmp);
@@ -223,6 +223,7 @@ namespace BitmapParser {
 				});
 
 			copy.UnlockBits(bmpData);
+			m_repository.Swap(bitmapIndex, copy);
 
 			return copy;
 		}
@@ -377,6 +378,7 @@ namespace BitmapParser {
 #region EXCEPTION_CONSTANTS
 
 		internal const string EXCEPTION_PATH_DOES_NOT_EXIST = "Supplied path does not exist.";
+		internal const int    MAX_BITMAP_DIMENSION          = 50000;
 
 #endregion
 	}
