@@ -179,7 +179,7 @@ namespace BitmapParser {
 		/// <param name="bitmapIndex">The index of the Bitmap in the internal array.</param>
 		/// <param name="functor">A delegate function that performs the desired modifications on the pixel data.</param>
 		/// <returns>Returns a copy of the bitmap at index bitMapIndex</returns>
-		public unsafe Bitmap ModifyRgbUnsafeRef(int bitmapIndex, BitmapRgbDelegate functor) {
+		public unsafe Bitmap ModifyRgbUnsafe(int bitmapIndex, BitmapRgbDelegate functor) {
 			if (IsDisposed)
 				throw new BitMapParserDisposedException();
 
@@ -223,9 +223,7 @@ namespace BitmapParser {
 				});
 
 			copy.UnlockBits(bmpData);
-			m_repository.Swap(bitmapIndex, copy);
-
-			return copy;
+			return m_repository.Swap(bitmapIndex, copy);
 		}
 
 		/// <summary>
@@ -234,10 +232,12 @@ namespace BitmapParser {
 		/// <param name="functor">The delegate that specifies how the RGB values should be modified.</param>
 		/// <param name="bitmapIndices">The indices of the bitmaps to modify.</param>
 		/// <returns>A reference to an array of modified bitmaps.</returns>
-		public Bitmap[] ModifyRgbUnsafeRef(BitmapRgbDelegate functor, params int[] bitmapIndices) {
+		public Bitmap[] ModifyRgbUnsafe(BitmapRgbDelegate functor, params int[] bitmapIndices) {
+			if (bitmapIndices.Any(i => i < 0 || i >= m_repository.Count))
+				throw new IndexOutOfRangeException(EXCEPTION_OUT_OF_RANGE_INDEX_MODIFY_RGB_UNSAFE);
+			
 			foreach (var index in bitmapIndices) {
-				var modified = ModifyRgbUnsafeRef(index, functor);
-				m_repository.Swap(index, modified);
+				ModifyRgbUnsafe(index, functor);
 			}
 
 			return m_repository.Modified;
@@ -250,45 +250,10 @@ namespace BitmapParser {
 		/// <returns>A reference to the modified array of bitmaps</returns>
 		public Bitmap[] ModifyAllRgbUnsafeRef(BitmapRgbDelegate functor) {
 			for (var i = 0; i < m_repository.Count; i++) {
-				var modified = ModifyRgbUnsafeRef(i, functor);
-				m_repository.Swap(i, modified);
+				ModifyRgbUnsafe(i, functor);
 			}
 
 			return m_repository.Modified;
-		}
-
-		/// <summary>
-		/// Modifies the RGB values of a Bitmap at a specific index in an unsafe and concurrent manner. 
-		/// This code is base on: https://csharpexamples.com/fast-image-processing-c/
-		///		from author Turgay
-		/// Modifies the RGB values of a Bitmap at a specific index in an unsafe and concurrent manner.
-		/// This makes a call to an internally unsafe method
-		/// </summary>
-		/// <param name="bitmapIndex">The index of the Bitmap in the internal array.</param>
-		/// <param name="functor">A delegate function that performs the desired modifications on the pixel data.</param>
-		/// <returns>Returns reference to the internal array of Bitmap objects.</returns>
-		public Bitmap ModifyRgbUnsafe(int bitmapIndex, BitmapRgbDelegate functor) {
-			return ModifyRgbUnsafeRef(bitmapIndex, functor);
-		}
-
-		/// <summary>
-		/// Modifies the RGB values of multiple bitmaps using the provided functor.
-		/// </summary>
-		/// <param name="functor">The delegate that specifies how the RGB values should be modified.</param>
-		/// <param name="bitmapIndices">The indices of the bitmaps to modify.</param>
-		/// <returns>A reference to an array of modified bitmaps.</returns>
-		public Bitmap[] ModifyRgbUnsafe(BitmapRgbDelegate functor, params int[] bitmapIndices) {
-			return ModifyRgbUnsafeRef(functor, bitmapIndices);
-		}
-
-		/// <summary>
-		/// Modifies the RGB values of all the bitmaps in the array using the specified functor
-		/// This calls an internally unsafe method.
-		/// </summary>
-		/// <param name="functor">The delegate that defines the modification operation</param>
-		/// <returns>A reference to the modified array of bitmaps</returns>
-		public Bitmap[] ModifyAllRgbUnsafe(BitmapRgbDelegate functor) {
-			return ModifyAllRgbUnsafeRef(functor);
 		}
 
 		/// <summary>
@@ -378,8 +343,8 @@ namespace BitmapParser {
 #region EXCEPTION_CONSTANTS
 
 		internal const string EXCEPTION_PATH_DOES_NOT_EXIST = "Supplied path does not exist.";
+		internal const string EXCEPTION_OUT_OF_RANGE_INDEX_MODIFY_RGB_UNSAFE = $"Index passed to {nameof(ModifyRgbUnsafe)} was out of range";
 		internal const int    MAX_BITMAP_DIMENSION          = 50000;
-
 #endregion
 	}
 }

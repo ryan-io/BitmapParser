@@ -8,7 +8,7 @@ using Xunit;
 
 namespace BitmapParserTest.Unit.BitmapParser {
 	public class BitmapParserUnitTests : IDisposable {
-		Bitmap[] MockArrays { get; set; }
+		Bitmap[] MockArrays { get; }
 
 		public BitmapParserUnitTests() {
 			MockArrays = Enumerable.Repeat(new Bitmap(1, 1), 100).ToArray();
@@ -129,36 +129,6 @@ namespace BitmapParserTest.Unit.BitmapParser {
 
 			m_repository.Received(1).GetModified(Arg.Is(index));
 			original.Should().BeEquivalentTo(MockArrays[index]);
-		}
-
-		[Fact]
-		public void ModifyRgbUnsafe_ShouldReturnModifiedBitmapUnchanged_WhenValidIndexAndFunctor() {
-			// Arrange
-			const int index   = 0;
-			var       initBmp = new Bitmap(1, 1);
-			m_parallelOptions.Get.Returns(ParallelOptionsDefault.Get());
-			m_repository.GetOriginal(index).Returns(initBmp);
-
-			// Act
-			var result = m_sut.ModifyRgbUnsafe(index,
-				(ref int i, ref int red, ref int green, ref int blue)
-					=> Functor(ref i, ref red, ref green, ref blue));
-
-			// Assert
-			m_repository.Received(1).GetOriginal(Arg.Is(index));
-
-			m_sut.IsDisposed.Should().BeFalse();
-			result.Should().NotBeNull();
-			result.Should().NotBeSameAs(initBmp);
-			return;
-
-			void Functor(ref int i, ref int red, ref int green, ref int blue) {
-				var intIndex = i;
-				red++;
-				green++;
-				blue++;
-				var test = index;
-			}
 		}
 
 		[Theory]
@@ -351,7 +321,7 @@ namespace BitmapParserTest.Unit.BitmapParser {
 		}
 
 		[Fact]
-		public void SwapBitmaps_ThrowsEXCEPTION_INDEX_OUT_OF_RANGE_WhenOriginalArrayIsNull() {
+		public void SwapBitmaps_ThrowsIndexOutOfRangeException_WhenOriginalArrayIsNull() {
 			var index = -1;
 			var bmp   = new Bitmap(1, 1);
 			m_repository.Swap(index, bmp)
@@ -374,8 +344,9 @@ namespace BitmapParserTest.Unit.BitmapParser {
 			const int max                  = global::BitmapParser.BitmapParser.MAX_BITMAP_DIMENSION;
 			var       criteria             = BitmapResizeCriteria.Default();
 			var       originBmp            = new Bitmap(width, height);
-			var       expectedScaledWidth  = Math.Clamp((int)(originBmp.Width * scale), 1, max);
-			var       expectedScaledHeight = Math.Clamp((int)(originBmp.Height * scale), 1, max);;
+			var       expectedScaledWidth  = Math.Clamp((int)(originBmp.Width  * scale), 1, max);
+			var       expectedScaledHeight = Math.Clamp((int)(originBmp.Height * scale), 1, max);
+			;
 
 			m_repository.GetOriginal(0).Returns(originBmp);
 
@@ -384,13 +355,104 @@ namespace BitmapParserTest.Unit.BitmapParser {
 			scaledBitmap.Height.Should().Be(expectedScaledHeight);
 		}
 
-		
-		
 		[Fact]
 		public void Dispose_ShouldCallDisposeOnRepositoryAndImageSaver() {
 			m_sut.Dispose();
 			m_repository.Received(1).Dispose();
 			m_sut.IsDisposed.Should().BeTrue();
+		}
+
+		[Fact]
+		public void ModifyRgbUnsafe_ShouldThrowBitMapParserDisposedException_WhenBitmapParserIsDispose() {
+			m_sut.Dispose();
+			m_sut.Should().Throws<BitMapParserDisposedException>();
+		}
+
+		[Fact]
+		public void ModifyRgbUnsafe_ShouldReturnAModifiedBitmap_WhenAppropriateFunctorIsPassed() {
+			const int index           = 0;
+			var       mockOriginalBmp = new Bitmap(2, 2);
+			var       mockModifiedBmp = new Bitmap(1, 1);
+
+			var spy = Substitute.For<global::BitmapParser.BitmapParser.BitmapRgbDelegate>();
+
+			m_parallelOptions.Get.Returns(ParallelOptionsDefault.Get());
+			m_repository.GetOriginal(index).Returns(mockOriginalBmp);
+			m_repository.Swap(index, Arg.Any<Bitmap>()).Returns(mockModifiedBmp);
+
+			var modifiedBmp =
+				m_sut.ModifyRgbUnsafe(0, spy);
+			
+			spy.ReceivedWithAnyArgs();
+			modifiedBmp.Should().NotBeSameAs(mockOriginalBmp);
+			modifiedBmp.Should().BeEquivalentTo(mockModifiedBmp);
+		}
+
+		[Fact]
+		public void ModifyRgbUnsafe_ShouldModifyAllBitmapIndices_WhenValidIndicesAndFunctorArePassed()
+		{
+			// Arrange
+			var bitmapIndices   = new[] {1, 2, 3};
+			var mockBitmap      = new Bitmap(1, 1);
+			var mockBitmapArray = new Bitmap[bitmapIndices.Length];
+			m_repository.GetOriginal(1).Returns(mockBitmap);
+			m_repository.GetOriginal(2).Returns(mockBitmap);
+			m_repository.GetOriginal(3).Returns(mockBitmap);
+			m_parallelOptions.Get.Returns(ParallelOptionsDefault.Get());
+			m_repository.Modified.Returns(mockBitmapArray);
+			m_repository.Count.Returns(bitmapIndices.Length + 1);
+			
+			// Act
+			var modifiedBitmaps = m_sut.ModifyRgbUnsafe(Functor, bitmapIndices);
+
+			// Assert
+			modifiedBitmaps.Should().NotBeNull();
+			modifiedBitmaps.Should().HaveCount(bitmapIndices.Length);
+			modifiedBitmaps.Should().BeSameAs(mockBitmapArray);
+        
+			m_repository.Received(bitmapIndices.Length).Swap(Arg.Any<int>(), Arg.Any<Bitmap>());
+		}
+
+		[Theory]
+		[InlineData(-1, 5)]
+		[InlineData(100, 101)]
+		public void ModifyRgbUnsafe_ShouldThrowIndexOutOfRangeException_WhenContainsInvalidIndex(int i1, int i2) {
+			m_repository.Count.Returns(4);
+
+			Action response = () => m_sut.ModifyRgbUnsafe(Functor, i1, i2);
+
+			response.Should().Throw<IndexOutOfRangeException>()
+			        .WithMessage(global::BitmapParser.BitmapParser.EXCEPTION_OUT_OF_RANGE_INDEX_MODIFY_RGB_UNSAFE);
+		}
+
+		[Fact]
+		public void ModifyAllRgbUnsafeRef_ShouldReturnModified_WhenFunctorIsValid() {
+			var bitmapIndices   = new[] {0, 1, 2};
+			var mockBitmap      = new Bitmap(1, 1);
+			var mockBitmapArray = new Bitmap[bitmapIndices.Length];
+			
+			m_repository.Count.Returns(bitmapIndices.Length );
+			m_repository.GetOriginal(0).Returns(mockBitmap);
+			m_repository.GetOriginal(1).Returns(mockBitmap);
+			m_repository.GetOriginal(2).Returns(mockBitmap);
+			m_parallelOptions.Get.Returns(ParallelOptionsDefault.Get());
+			m_repository.Modified.Returns(mockBitmapArray);
+			
+			// Act
+			var modifiedBitmaps = m_sut.ModifyAllRgbUnsafeRef(Functor);
+
+			// Assert
+			modifiedBitmaps.Should().NotBeNull();
+			modifiedBitmaps.Should().HaveCount(bitmapIndices.Length);
+			modifiedBitmaps.Should().BeSameAs(mockBitmapArray);
+        
+			m_repository.Received(bitmapIndices.Length).Swap(Arg.Any<int>(), Arg.Any<Bitmap>());
+		}
+		
+		static void Functor(ref int index, ref int red, ref int green, ref int blue) {
+			red   += 1;
+			green += 1;
+			blue  += 1;
 		}
 
 		readonly global::BitmapParser.BitmapParser m_sut;
